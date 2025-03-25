@@ -51,7 +51,7 @@ crew = Crew(
 
 def run_crew(input_query):
     result = crew.kickoff(inputs={"input": input_query})
-    except litellm.exceptions.BadRequestError as e:
+  except litellm.exceptions.BadRequestError as e:
     # Log the error or handle it
     print(f"Bad Request Error: {e}")
     print(f"Input query that caused the error: {input_query}")
