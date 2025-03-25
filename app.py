@@ -50,7 +50,6 @@ crew = Crew(
 )
 
 def run_crew(input_query):
-    try:
     result = crew.kickoff(inputs={"input": input_query})
 except litellm.exceptions.BadRequestError as e:
     # Log the error or handle it
