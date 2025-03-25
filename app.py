@@ -14,9 +14,11 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, WebBaseLoader
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings  # Corrected import!  Requires langchain-huggingface
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
+from langchain.agents import initialize_agent # Import initialize_agent
+
 
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
@@ -165,7 +167,10 @@ prompt = PromptTemplate(
 
 # Agent creation
 react_agent = create_react_agent(llm, tools, prompt=prompt) # Pass the prompt!
-agent_executor = AgentExecutor.from_agent(agent=react_agent, tools=tools, verbose=True)
+
+# Create AgentExecutor
+agent_executor = AgentExecutor(agent=react_agent, tools=tools, verbose=True)
+
 
 # ---  Run the Agent ---
 if st.button("Get Compliance Advice"):
