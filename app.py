@@ -1,6 +1,7 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import os
 from typing import List, Optional
 
@@ -15,6 +16,7 @@ from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings  # Corrected import!  Requires langchain-huggingface
 from langchain.tools import Tool
+from langchain.prompts import PromptTemplate
 
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
@@ -46,7 +48,7 @@ if input_method == "Text":
 elif input_method == "File Upload":
     uploaded_file = st.file_uploader("Upload a Document (PDF, DOCX, TXT, HTML)", type=["pdf", "docx", "txt", "html"])
     if uploaded_file:
-        # Basic file processing (adjust based on file type)
+        # Basic file processing
         file_extension = uploaded_file.name.split(".")[-1].lower()
         temp_file_path = f"temp_file.{file_extension}"
         with open(temp_file_path, "wb") as f:
@@ -62,15 +64,12 @@ elif input_method == "File Upload":
              loader = UnstructuredHTMLLoader(temp_file_path)
         else:
             st.error("Unsupported file type.")
-            loader = None # Prevent errors later.
+            loader = None
 
         if loader:
            documents = loader.load()
-           # Now you can process the documents and prepare the query for the agent.
            query = st.text_area("Your Question/Query related to the uploaded document:")
-           # Optionally, pre-populate the query field with a suggestion
-           # query = st.text_area("Your Question/Query related to the uploaded document:", value="Summarize the key compliance requirements mentioned in this document.")
-        os.remove(temp_file_path) # Clean up the temp file
+        os.remove(temp_file_path)
 elif input_method == "URL":
     url = st.text_input("Enter URL:")
     if url:
@@ -82,20 +81,18 @@ elif input_method == "URL":
             st.error(f"Error loading URL: {e}")
             documents = None
 else:
-    documents = None  # No document loaded yet.
+    documents = None
 
 # --- Agent Configuration ---
 
 # Model Selection
-model_name = st.selectbox("Choose the Language Model:", ("gemini-1.5-pro-latest", "gemini-1.0-pro"))  # Add others as needed
+model_name = st.selectbox("Choose the Language Model:", ("gemini-1.5-pro-latest", "gemini-1.0-pro"))
 
 # Gemini Pro Model
 llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=GOOGLE_API_KEY, convert_system_message_to_human=True)
 
-
-# Embedding Model (Using sentence-transformers/all-mpnet-base-v2, a popular open-source option)
-
-embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2") # Or choose a different model
+# Embedding Model
+embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2")
 
 # Tools
 search = DuckDuckGoSearchRun()
@@ -108,36 +105,67 @@ tools = [
 ]
 
 # Add Retrieval Tool if documents are loaded (RAG)
-if input_method != "Text" and 'documents' in locals() and documents: # Correctly check for documents
-   text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-   texts = text_splitter.split_documents(documents)
+if input_method != "Text" and 'documents' in locals() and documents:
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    texts = text_splitter.split_documents(documents)
 
-   # Choose a persistence directory.  Delete this directory to clear the vectorstore.
-   persist_directory = "db"
-
-   # Use HuggingFaceEmbeddings
-   vectordb = Chroma.from_documents(documents=texts,
+    persist_directory = "db"
+    vectordb = Chroma.from_documents(documents=texts,
                                      embedding=embeddings,
                                      persist_directory=persist_directory)
-   vectordb.persist()
-   retriever = vectordb.as_retriever()
+    vectordb.persist()
+    retriever = vectordb.as_retriever()
 
-   qa = RetrievalQA.from_chain_type(
-       llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True
-   )
+    qa = RetrievalQA.from_chain_type(
+        llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True
+    )
 
-   tools.append(
+    tools.append(
         Tool(
             name="RBI Document Retriever",
             func=qa.run,
-            description="Useful for answering questions about the content of the uploaded RBI documents or the URL.  Input should be a fully formed question.",
+            description="Useful for answering questions about the content of the uploaded RBI documents or the URL. Input should be a fully formed question.",
         )
     )
 
 
+# Define the prompt template
+prompt_template = """
+You are an expert RBI compliance advisor.  Use the tools available to answer the user's questions accurately and thoroughly.
+
+If the user provides a document or URL, prioritize information from that source.  Otherwise, use your general knowledge and search to find the answer.
+
+Be polite and professional in your responses.
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}
+"""
+
+# Create a PromptTemplate
+prompt = PromptTemplate(
+    template=prompt_template,
+    input_variables=["input", "tools", "tool_names", "agent_scratchpad"],
+)
+
+
 # Agent creation
-react_agent = create_react_agent(llm, tools)  # verbose is removed from here
-agent_executor = AgentExecutor.from_agent(agent=react_agent, tools=tools, verbose=True) # verbose is added here
+react_agent = create_react_agent(llm, tools, prompt=prompt) # Pass the prompt!
+agent_executor = AgentExecutor.from_agent(agent=react_agent, tools=tools, verbose=True)
 
 # ---  Run the Agent ---
 if st.button("Get Compliance Advice"):
@@ -146,7 +174,7 @@ if st.button("Get Compliance Advice"):
             with st.spinner("Thinking..."):
                 response = agent_executor.invoke({"input": query})
                 st.write("### Answer:")
-                st.write(response["output"])  # Access the 'output' key
+                st.write(response["output"])
         except Exception as e:
             st.error(f"An error occurred: {e}")
     else:
