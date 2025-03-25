@@ -1,3 +1,4 @@
+langchain-huggingface
 langchain 
 google-generativeai 
 crewai 
