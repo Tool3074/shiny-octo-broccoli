@@ -14,3 +14,4 @@ unstructured
 pypdf 
 docx2txt  
 unstructured_inference
+langchain_community
