@@ -17,3 +17,4 @@ docx2txt
 unstructured_inference
 langchain_community
 langchain-cli
+BeautifulSoup
