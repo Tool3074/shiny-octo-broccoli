@@ -11,7 +11,7 @@ from crewai import Agent, Task, Crew, Process
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.7)  # Initialize ChatGoogleGenerativeAI with temp
+llm = ChatGoogleGenerativeAI(model="google/gemini-pro", temperature=0.7)  # Initialize ChatGoogleGenerativeAI with temp
 
 # Agents and Crew setup
 compliance_analyst = Agent(
