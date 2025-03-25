@@ -1,5 +1,5 @@
 __import__('pysqlite3')
-import sys,os
+import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import streamlit as st
 import os
@@ -13,7 +13,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 llm = ChatGoogleGenerativeAI(model="gemini-pro")
 
-# Agents and Crew setup (same as before)
+# Agents and Crew setup
 compliance_analyst = Agent(
     role="RBI Compliance Analyst",
     goal="Provide accurate and up-to-date information on RBI regulations.",
@@ -46,12 +46,12 @@ crew = Crew(
     agents=[compliance_analyst, reporting_specialist],
     tasks=[research_task, report_task],
     verbose=2,
-    process=Process.sequential,
+    process=Process.sequential
 )
 
 def run_crew(input_query):
     research_task.description = f"Research the latest RBI guidelines on: {input_query}"
-    result = crew.kickoff()
+    result = crew.kickoff(inputs={"input":input_query})
     return result
 
 # Streamlit UI
