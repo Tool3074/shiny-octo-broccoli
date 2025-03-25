@@ -19,7 +19,6 @@ from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent # Import initialize_agent
 
-
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
 from langchain_community.document_loaders import Docx2txtLoader
@@ -165,11 +164,20 @@ prompt = PromptTemplate(
 )
 
 
-# Agent creation
-react_agent = create_react_agent(llm, tools, prompt=prompt) # Pass the prompt!
+# Agent creation (No longer using create_react_agent directly)
 
-# Create AgentExecutor
-agent_executor = AgentExecutor(agent=react_agent, tools=tools, verbose=True)
+agent_kwargs = {
+    "prompt": prompt,
+    "tools": tools
+}
+
+agent_executor = initialize_agent(
+    tools,
+    llm,
+    agent="react-docstore",  # Or "react-json", etc.  Experiment!
+    verbose=True,
+    agent_kwargs=agent_kwargs,
+)
 
 
 # ---  Run the Agent ---
