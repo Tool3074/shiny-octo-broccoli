@@ -3,3 +3,5 @@ google-generativeai
 crewai 
 streamlit 
 python-dotenv
+langchain-google-genai
+langchain-core # Required by newer versions of langchain
