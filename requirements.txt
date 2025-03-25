@@ -7,3 +7,9 @@ langchain-google-genai
 langchain-core # Required by newer versions of langchain
 pysqlite3-binary
 litellm
+sentence-transformers
+duckduckgo-search 
+chromadb 
+unstructured_pypdf 
+docx2txt  
+unstructured_inference
