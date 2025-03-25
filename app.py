@@ -1,7 +1,6 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
 import os
 from typing import List, Optional
 
@@ -32,7 +31,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  #  Needed for Gemini & Search Tool
 
 # Set USER_AGENT (Optional, but recommended)
-os.environ["USER_AGENT"] = "RBI Compliance Advisor Crew (your_email@example.com)"  # Replace with your email
+#os.environ["USER_AGENT"] = "RBI Compliance Advisor Crew (your_email@example.com)"  #Moved to deployment environment
 
 
 # ---  Streamlit UI Setup ---
