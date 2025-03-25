@@ -15,7 +15,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, WebBaseLoader
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
- from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
 # from langchain.embeddings import OpenAIEmbeddings  # Removed
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings # Removed, using sentence-transformers
 from langchain.tools import Tool
