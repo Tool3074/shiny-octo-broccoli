@@ -50,9 +50,12 @@ crew = Crew(
 )
 
 def run_crew(input_query):
-    research_task.description = f"Research the latest RBI guidelines on: {input_query}"
-    result = crew.kickoff(inputs={"input":input_query})
-    return result
+    try:
+    result = crew.kickoff(inputs={"input": input_query})
+except litellm.exceptions.BadRequestError as e:
+    # Log the error or handle it
+    print(f"Bad Request Error: {e}")
+    print(f"Input query that caused the error: {input_query}")
 
 # Streamlit UI
 st.title("RBI Compliance Advisor")
