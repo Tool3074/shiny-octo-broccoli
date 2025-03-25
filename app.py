@@ -33,11 +33,13 @@ reporting_specialist = Agent(
 research_task = Task(
     description="Research the latest RBI guidelines on the user's query.",
     agent=compliance_analyst,
+    expected_output="A summary of the relevant RBI guidelines and regulations.",
 )
 
 report_task = Task(
     description="Create a detailed report summarizing the compliance requirements.",
     agent=reporting_specialist,
+    expected_output="A comprehensive report detailing the compliance requirements and steps to adhere to them.",
 )
 
 crew = Crew(
@@ -63,4 +65,4 @@ if st.button("Get Compliance Information"):
             result = run_crew(query)
         st.write(result)
     else:
-        st.warning("Please enter a query.") # Correct indentation here
+        st.warning("Please enter a query.")
