@@ -8,11 +8,21 @@ import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew, Process
 import litellm
+import getpass
 
-load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-llm = ChatGoogleGenerativeAI(model="gemini-pro")
+
+if "GOOGLE_API_KEY" not in os.environ:
+    os.environ["GOOGLE_API_KEY"] = getpass.getpass("Enter your Google AI API key: ")
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-pro",
+    temperature=1,
+    max_tokens=None,
+    timeout=None,
+    max_retries=2,
+    # other params...
+)
 
 # Agents and Crew setup
 compliance_analyst = Agent(
