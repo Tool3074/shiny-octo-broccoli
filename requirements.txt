@@ -10,6 +10,7 @@ litellm
 sentence-transformers
 duckduckgo-search 
 chromadb 
-unstructured_pypdf 
+unstructured
+pypdf 
 docx2txt  
 unstructured_inference
