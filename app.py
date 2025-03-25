@@ -45,7 +45,7 @@ report_task = Task(
 crew = Crew(
     agents=[compliance_analyst, reporting_specialist],
     tasks=[research_task, report_task],
-    verbose=2,
+    verbose=True,
     process=Process.sequential
 )
 
