@@ -1,7 +1,6 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-
 import os
 from typing import List, Optional
 
@@ -14,7 +13,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, WebBaseLoader
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings  # Corrected import!
+from langchain_huggingface import HuggingFaceEmbeddings  # Corrected import!  Requires langchain-huggingface
 from langchain.tools import Tool
 
 # For parsing PDFs and other document types
@@ -27,6 +26,10 @@ load_dotenv()
 
 # API Keys (Replace with your actual keys or environment variables)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  #  Needed for Gemini & Search Tool
+
+# Set USER_AGENT (Optional, but recommended)
+os.environ["USER_AGENT"] = "RBI Compliance Advisor Crew (your_email@example.com)"  # Replace with your email
+
 
 # ---  Streamlit UI Setup ---
 st.title("RBI Compliance Advisor Crew")
