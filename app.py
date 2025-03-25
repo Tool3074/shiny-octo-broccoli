@@ -164,16 +164,15 @@ prompt = PromptTemplate(
 )
 
 
-# Agent creation (No longer using create_react_agent directly)
 
+# Agent creation
 agent_kwargs = {
     "prompt": prompt,
-    "tools": tools
 }
 
 agent_executor = initialize_agent(
-    tools,
-    llm,
+    tools=tools, # Pass tools here
+    llm=llm,
     agent="react-docstore",  # Or "react-json", etc.  Experiment!
     verbose=True,
     agent_kwargs=agent_kwargs,
