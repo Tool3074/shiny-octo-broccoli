@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 from langchain_google_genai import ChatGoogleGenerativeAI
 from crewai import Agent, Task, Crew, Process
+import litellm
 
 load_dotenv()
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -49,12 +50,16 @@ crew = Crew(
     process=Process.sequential
 )
 
+# Function to run crew and handle potential BadRequestError
 def run_crew(input_query):
-    result = crew.kickoff(inputs={"input": input_query})
-  except litellm.exceptions.BadRequestError as e:
-    # Log the error or handle it
-    print(f"Bad Request Error: {e}")
-    print(f"Input query that caused the error: {input_query}")
+    try:
+        result = crew.kickoff(inputs={"input": input_query})
+        return result  # Ensure you return the result to Streamlit
+    except litellm.exceptions.BadRequestError as e:
+        # Log the error and return a user-friendly message
+        print(f"Bad Request Error: {e}")
+        print(f"Input query that caused the error: {input_query}")
+        return f"An error occurred while processing your request: {e}. Please try again later."
 
 # Streamlit UI
 st.title("RBI Compliance Advisor")
