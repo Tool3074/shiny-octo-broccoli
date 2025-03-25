@@ -5,31 +5,26 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
-from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_google_genai import ChatGoogleGenerativeAI # Removed
 from crewai import Agent, Task, Crew, Process
-import litellm
-import getpass
+from litellm import completion # Added
 
 
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-if "GOOGLE_API_KEY" not in os.environ:
-    os.environ["GOOGLE_API_KEY"] = getpass.getpass("Enter your Google AI API key: ")
+# Define the Gemini completion function using LiteLLM
+def gemini_completion(prompt, model="gemini-pro", temperature=0.7, max_tokens=500): # Added temperature and max_tokens
+    response = completion(model=model, messages=[{"role": "user", "content": prompt}], temperature=temperature, max_tokens=max_tokens) #Explicitly define prompt, temperature and max_tokens,
+    return response.choices[0].message["content"]
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro",
-    temperature=1,
-    max_tokens=None,
-    timeout=None,
-    max_retries=2,
-    # other params...
-)
 
 # Agents and Crew setup
 compliance_analyst = Agent(
     role="RBI Compliance Analyst",
     goal="Provide accurate and up-to-date information on RBI regulations.",
     backstory="An expert in Indian banking regulations with years of experience.",
-    llm=llm,
+    # llm=llm, # Removed
     verbose=True,
 )
 
@@ -37,20 +32,20 @@ reporting_specialist = Agent(
     role="Reporting Specialist",
     goal="Generate clear and concise reports on compliance requirements.",
     backstory="A detail-oriented professional skilled in regulatory reporting.",
-    llm=llm,
+    # llm=llm, # Removed
     verbose=True,
 )
 
 research_task = Task(
-    description="Research the latest RBI guidelines on the user's query.",
+    description="Research the latest RBI guidelines on: {{input}}. Use Google Gemini to answer this question.  Ensure your search query includes site:rbi.org.in to restrict to official RBI guidelines.", # Added Gemini specifier
     agent=compliance_analyst,
-    expected_output="A summary of the relevant RBI guidelines and regulations.",
+    expected_output="A summary of the relevant RBI guidelines and regulations, including links to the RBI website.",
 )
 
 report_task = Task(
-    description="Create a detailed report summarizing the compliance requirements.",
+    description="Create a detailed report summarizing the compliance requirements for {{input}} based on the research.  Use Google Gemini to create the report. Ensure all references are to the RBI website.", # Added Gemini specifier
     agent=reporting_specialist,
-    expected_output="A comprehensive report detailing the compliance requirements and steps to adhere to them.",
+    expected_output="A comprehensive report detailing the compliance requirements and steps to adhere to them, including citations from the RBI website.",
 )
 
 crew = Crew(
@@ -60,16 +55,10 @@ crew = Crew(
     process=Process.sequential
 )
 
-# Function to run crew and handle potential BadRequestError
 def run_crew(input_query):
-    try:
-        result = crew.kickoff(inputs={"input": input_query})
-        return result  # Ensure you return the result to Streamlit
-    except litellm.exceptions.BadRequestError as e:
-        # Log the error and return a user-friendly message
-        print(f"Bad Request Error: {e}")
-        print(f"Input query that caused the error: {input_query}")
-        return f"An error occurred while processing your request: {e}. Please try again later."
+    #research_task.description = f"Research the latest RBI guidelines on: {input_query}" #Not needed because its inside the Task now
+    result = crew.kickoff(inputs={"input":input_query})
+    return result
 
 # Streamlit UI
 st.title("RBI Compliance Advisor")
