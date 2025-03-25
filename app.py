@@ -18,7 +18,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent
-from bs4 import BeautifulSoup4  # Import BeautifulSoup
+from bs4 import BeautifulSoup  # Import BeautifulSoup
 
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
