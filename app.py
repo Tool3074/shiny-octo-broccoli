@@ -60,4 +60,4 @@ if st.button("Get Compliance Information"):
             result = run_crew(query)
         st.write(result)
     else:
-st.warning("Please enter a query.")
+        st.warning("Please enter a query.") # Correct indentation here
