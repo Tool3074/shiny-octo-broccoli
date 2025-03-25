@@ -1,6 +1,7 @@
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import os
 from typing import List, Optional
 
@@ -18,6 +19,7 @@ from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
 from langchain.agents import initialize_agent
 from bs4 import BeautifulSoup  # Import BeautifulSoup
+from langchain.output_parsers import OutputFixingParser  # Import OutputFixingParser
 
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
@@ -198,8 +200,6 @@ prompt = PromptTemplate(
     input_variables=["input", "tools", "tool_names", "agent_scratchpad"],
 )
 
-
-
 # Agent creation
 agent_kwargs = {
     "prompt": prompt,
@@ -211,6 +211,7 @@ agent_executor = initialize_agent(
     agent="react-docstore",  # Use react-docstore!
     verbose=True,
     agent_kwargs=agent_kwargs,
+    handle_parsing_errors=True,  # Enable error handling!
 )
 
 
