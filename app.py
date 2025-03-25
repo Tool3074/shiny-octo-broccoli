@@ -7,17 +7,18 @@ from typing import List, Optional
 
 from dotenv import load_dotenv
 import streamlit as st
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain.agents import AgentExecutor
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import DuckDuckGoSearchRun
-from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter  # Modified import!
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, WebBaseLoader
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.tools import Tool
 from langchain.prompts import PromptTemplate
-from langchain.agents import initialize_agent # Import initialize_agent
+from langchain.agents import initialize_agent
+from bs4 import BeautifulSoup  # Import BeautifulSoup
 
 # For parsing PDFs and other document types
 from langchain_community.document_loaders import UnstructuredPDFLoader, PyPDFLoader
@@ -69,6 +70,17 @@ elif input_method == "File Upload":
 
         if loader:
            documents = loader.load()
+
+           # Preprocess documents to ensure splittable content
+           for doc in documents:
+               if file_extension == "html":
+                   soup = BeautifulSoup(doc.page_content, "html.parser")
+                   # Insert line breaks after common block-level elements
+                   for tag in soup.find_all(['p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'tr']):
+                       tag.insert_after('\n') #insert newlines to make it easy for the splitter
+                   doc.page_content = soup.get_text()
+               #Add more file type processes here if there is chunking errors.
+
            query = st.text_area("Your Question/Query related to the uploaded document:")
         os.remove(temp_file_path)
 elif input_method == "URL":
@@ -77,6 +89,13 @@ elif input_method == "URL":
         try:
             loader = WebBaseLoader(url)
             documents = loader.load()
+
+             # Preprocess HTML content (same as file upload)
+            for doc in documents:
+                soup = BeautifulSoup(doc.page_content, "html.parser")
+                for tag in soup.find_all(['p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'tr']):
+                    tag.insert_after('\n')
+                doc.page_content = soup.get_text()
             query = st.text_area("Your Question/Query related to the URL content:")
         except Exception as e:
             st.error(f"Error loading URL: {e}")
