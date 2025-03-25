@@ -10,7 +10,7 @@ import streamlit as st
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import DuckDuckGoSearchRun
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter  # Modified import!
 from langchain_community.document_loaders import TextLoader, WebBaseLoader
 from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import Chroma
@@ -111,14 +111,17 @@ search_tool = Tool(
 lookup_tool = None # Initialize outside the if block
 
 if input_method != "Text" and 'documents' in locals() and documents:
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    #Use a better splitter
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=100  # Increased overlap, you can tune this.
+    )
     texts = text_splitter.split_documents(documents)
 
     persist_directory = "db"
     vectordb = Chroma.from_documents(documents=texts,
                                      embedding=embeddings,
                                      persist_directory=persist_directory)
-    vectordb.persist()
+    #vectordb.persist() #Removed the line because it's deprecated.
     retriever = vectordb.as_retriever()
 
     qa = RetrievalQA.from_chain_type(
