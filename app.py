@@ -95,17 +95,21 @@ llm = ChatGoogleGenerativeAI(model=model_name, google_api_key=GOOGLE_API_KEY, co
 # Embedding Model
 embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2")
 
+
 # Tools
 search = DuckDuckGoSearchRun()
-tools = [
-    Tool(
-        name="DuckDuckGo Search",
-        func=search.run,
-        description="Useful for when you need to answer questions about current events or general knowledge. Input should be a search query.",
-    )
-]
+
+# Rename the search tool
+search_tool = Tool(
+    name="Search",  # Renamed to "Search"
+    func=search.run,
+    description="Useful for when you need to answer questions about current events or general knowledge. Input should be a search query.",
+)
+
 
 # Add Retrieval Tool if documents are loaded (RAG)
+lookup_tool = None # Initialize outside the if block
+
 if input_method != "Text" and 'documents' in locals() and documents:
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     texts = text_splitter.split_documents(documents)
@@ -121,20 +125,30 @@ if input_method != "Text" and 'documents' in locals() and documents:
         llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=True
     )
 
-    tools.append(
-        Tool(
-            name="RBI Document Retriever",
-            func=qa.run,
-            description="Useful for answering questions about the content of the uploaded RBI documents or the URL. Input should be a fully formed question.",
-        )
+    lookup_tool = Tool(
+        name="Lookup",  # Named "Lookup"
+        func=qa.run,
+        description="Useful for answering questions about the content of the uploaded RBI documents or the URL. Input should be a fully formed question.",
     )
 
+# Create tools list.  Important to only include lookup tool if it exists.
+tools = [search_tool]
+
+if lookup_tool:
+    tools.append(lookup_tool) # Added only when a document is available.
+else:
+    st.info("Upload a document or enter a URL to enable the 'Lookup' tool.")
+
+#If there are not 2 tools we cannot continue
+if len(tools) != 2:
+    st.error("The 'react-docstore' agent requires exactly two tools: 'Search' and 'Lookup'.  Please upload a document or provide a URL to enable the 'Lookup' tool.")
+    st.stop()  # Stop execution
 
 # Define the prompt template
 prompt_template = """
 You are an expert RBI compliance advisor.  Use the tools available to answer the user's questions accurately and thoroughly.
 
-If the user provides a document or URL, prioritize information from that source.  Otherwise, use your general knowledge and search to find the answer.
+If the user provides a document or URL, prioritize information from that source using the Lookup tool. Otherwise, use your general knowledge and Search tool to find the answer.
 
 Be polite and professional in your responses.
 
@@ -173,7 +187,7 @@ agent_kwargs = {
 agent_executor = initialize_agent(
     tools=tools, # Pass tools here
     llm=llm,
-    agent="react-docstore",  # Or "react-json", etc.  Experiment!
+    agent="react-docstore",  # Use react-docstore!
     verbose=True,
     agent_kwargs=agent_kwargs,
 )
